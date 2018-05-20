@@ -19,7 +19,8 @@ TYPE_MODBUS xdata modbus_struct_buf;
 char xdata UART1_recv_buf[300];	//接收缓存
 char xdata modbus_buf[255];
 extern char xdata EEPROM_buf[512];//EEPROM
-char xdata UART1_Timeout, ModBus_resend_count;
+char xdata UART1_Timeout;
+int xdata ModBus_resend_count;
 int xdata Set_temperature = 65;
 char Temp_out = 0;
 char Start_Test_Conest = 0;
@@ -30,7 +31,7 @@ bit UATR1_rece_flag;				//接收标志
 bit UATR2_rece_flag;				//接收标志
 unsigned char xdata modbus_count = 0;
 
-char xdata TimeBase_Buff[TASK];
+int xdata TimeBase_Buff[TASK];
 
 void Delay1000ms();
 void DataDarsing(void);
@@ -137,7 +138,6 @@ void Uart2() interrupt 8
 void t0int() interrupt 1	//2.5ms 时基定时
 {
 	char i;
-	
 	UART1_Timeout++;
 	ModBus_resend_count++;
 	if(UART1_Timeout >= 100)
@@ -262,7 +262,8 @@ void TheQuery(char addr,int reg,char len)
 		{
 			Send2String(MakeModbus(addr,0x03,reg,len),8);
 			ModBus_resend_count = 0;
-			bell = 0;
+//			bell = 0;
+			error_4 = !error_4;
 		}
 	}
 	bell = 1;
@@ -373,12 +374,6 @@ void TemperatureDetection()
 					WDT_CONTR |= 0X10;	//喂狗
 					bibi(200,0,1);
 					Delay1000ms();
-					Send1Data(0X00);
-					Send1Data(0X01);
-					Send1Data(0X17);
-					Send1Data(0X30);
-					Send1Data(0X31);
-					Send1Data(0X32);
 				}
 			}
 		}
@@ -387,7 +382,6 @@ void TemperatureDetection()
 			Temp_out = 0;
 		}
 		
-	bibi(50,0,3);
 	}
 }
 	
@@ -418,7 +412,7 @@ void Test()
 	UATR2_rece_flag = 0;
 	modbus_count = 0;
 	
-	bibi(50,0,1);
+	bibi(50,50,2);
 	ERROR_CLASS(0);
 	PCON |= 0X10;	//清除看门狗复位标志
 }
