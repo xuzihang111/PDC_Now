@@ -64,6 +64,15 @@ TYPE_CRC modbusCRC16(uchar *updata,uint len)
 	return DataCRC;  
 }  
 
+/*
+@	输入参数	addr		modbus从机地址
+				com			modbus功能码
+				reg_addr	寄存器起始地址
+				len			数据字长度
+
+@	输出参数指针函数	数组类型，已经和成好的数组
+*/
+
 char * MakeModbus(uchar addr, uchar com, int reg_addr, int len)//合成modbus数据包
 {
 	char xdata return_buf[10];

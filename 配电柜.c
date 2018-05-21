@@ -35,7 +35,7 @@ int xdata TimeBase_Buff[TASK];
 
 void Delay1000ms();
 void DataDarsing(void);
-void TheQuery(char addr,int reg,char len);
+void TheQuery(char addr,int reg,char len, int com);
 void ASK_ok(int cmd);
 void Init();
 void TemperatureDetection();
@@ -185,25 +185,25 @@ void DataDarsing(void)
 			stat_2 = !stat_2;
 			switch (dat_buf.com)
 			{
-				case 0xff00: TheQuery(1,0x0017,6);break;
-				case 0xff01: TheQuery(1,0x0023,6);break;
-				case 0xff02: TheQuery(1,0x0029,6);break;
-				case 0xff03: TheQuery(1,0x0031,6);break;
-				case 0xff04: TheQuery(1,0x0039,6);break;
-				case 0xff05: TheQuery(1,0x0041,6);break;
-				case 0xff06: TheQuery(1,0x0049,6);break;
-				case 0xff07: TheQuery(1,0x004f,2);break;
+				case 0xff00: TheQuery(1,0x0017,6,dat_buf.com);break;	//电压
+				case 0xff01: TheQuery(1,0x0023,6,dat_buf.com);break;	//电流
+				case 0xff02: TheQuery(1,0x0029,6,dat_buf.com);break;	//无功功率
+				case 0xff03: TheQuery(1,0x0031,6,dat_buf.com);break;	//有功功率
+				case 0xff04: TheQuery(1,0x0039,6,dat_buf.com);break;	//功率因数
+				case 0xff05: TheQuery(1,0x0041,6,dat_buf.com);break;	//视在功率
+				case 0xff06: TheQuery(1,0x0049,6,dat_buf.com);break;	//频率
+				case 0xff07: TheQuery(1,0x004f,2,dat_buf.com);break;	//电能
 				
 				case 0xff10: relay_1 = 0;					//远程断电
-							  ASK_ok(0xff10);break;
+							  ASK_ok(dat_buf.com);break;
 				
 				case 0xff70: SendTemperature();break;		//读取当前温度
 				case 0xff71: SendSetTemperature();break;	//读取报警温度
 
 				case 0xff72: EEPROM_buf[0] = dat_buf.dat[0];WriteSection(TEMPERATURE_ADDRESS, EEPROM_buf);
-							 ASK_ok(0xff72);break;			//更改报警温度
+							 ASK_ok(dat_buf.com);break;			//更改报警温度
 
-				case 0xff80: PCON |= 0X10;ASK_ok(0xff80);IAP_CONTR = 0X20;break;	//复位
+				case 0xff80: PCON |= 0X10;ASK_ok(dat_buf.com);IAP_CONTR = 0X20;break;	//复位
 				
 				
 //				case 0xff00: TheQuery(1,0x0017,6);break;
@@ -251,7 +251,7 @@ void DataDarsing(void)
 }
 
 
-void TheQuery(char addr,int reg,char len)
+void TheQuery(char addr,int reg,char len, int com)
 {
 	Send2String(MakeModbus(addr,0x03,reg,len),8);
 
@@ -263,7 +263,7 @@ void TheQuery(char addr,int reg,char len)
 			Send2String(MakeModbus(addr,0x03,reg,len),8);
 			ModBus_resend_count = 0;
 //			bell = 0;
-			error_4 = !error_4;
+
 		}
 	}
 	bell = 1;
@@ -271,7 +271,7 @@ void TheQuery(char addr,int reg,char len)
 	Send1Data(0X00);
 	Send1Data(0X01);
 	Send1Data(0X17);
-	Send1String(AgreementPackaging(ADDRESS,NUMBER,0xff03, modbus_struct_buf.len + 10 , 
+	Send1String(AgreementPackaging(ADDRESS,NUMBER,com, modbus_struct_buf.len + 10 , 
 									modbus_struct_buf.dat),modbus_struct_buf.len + 10);
 
 	UATR2_rece_flag = 0;
@@ -350,6 +350,14 @@ void Init()
 			while(1);
 		}
 	}
+	
+	
+			Send1Data(0X00);
+			Send1Data(0X01);
+			Send1Data(0X17);
+			Send1Data(0X39);
+			Send1Data(0X39);
+			Send1Data(0X39);
 	
 	bibi(400,0,1);
 }
